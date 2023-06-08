@@ -7,11 +7,52 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-# Cargar los paquetes necesarios acá
+
 ```
 
 
-## Introducción
+```{r}
+library(dplyr)
+```
+
+
+```{r}
+library(ggplot2)
+```
+
+
+```{r}
+library(gitcreds)
+```
+
+```{r}
+library(readr)
+```
+
+
+```{r}
+library(usethis)
+```
+
+
+
+
+**Introducción**
+
+
+Esta sección consiste en entre 2 y 3 párrafos describiendo los datos.
+
+El trabajo se realiza a partir de bases de datos privistas por la Subsecretaría
+de Pesca y Acuicultura de la Repùblica Argentina. Comprenden las capturas 
+realizadas por buques que operan dentro de la ZEE de la Repùblica Argentina en 
+el período de 2010 a 2019
+
+
+-   ¿Qué datos son?
+-   ¿De dónde provienen? ¿Quién los tomó?
+-   ¿En qué período se tomaron?
+
+En general, cualquier detalle que crean relevante para que alguien sin acceso a los datos se haga una buena idea de los mismos.
 
 
 
