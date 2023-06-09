@@ -183,5 +183,108 @@ ahora le asigno una variable a cada cosa y saco la media
 captura_2010_01_Merluzahubbsi/captura_2010_01_todas
 
 ```
+## averiguar como fueron las capturas por especies por año y hacer un cuadro a traves del tiempo
+
+
+
+
+```{r}
+captura_puerto_flota_2010_2018 |> 
+  filter (especie %in% c("Merluza hubbsi", "Rayas nep", "Langostino", "Calamar Illex"))
+```
+
+
+## hago variable de  especies representativas (especies_repre)
+
+```{r}
+
+especies_repre <-
+  captura_puerto_flota_2010_2018 |> 
+  filter (especie %in% c("Merluza hubbsi", "Rayas nep", "Langostino", "Calamar Illex")) 
+  
+
+```
+
+
+
+```{r}
+
+ggplot(data=especies_repre)
+
+especies_repre |>
+  ggplot (especies_repre, aes (fecha, captura)) +
+  geom_point()
+```
+
+
+```{r}
+especies_repre |> 
+  ggplot(data = especies_repre, mapping = aes(x = fecha, y = captura)) + 
+  geom_line (aes(colour = especie))
+```
+
+
+
+
+
+## ensanchar la tabla con las especies
+Quiero tener la especie en cada columna
+
+```{r}
+captura_puerto_flota_2010_2018
+
+
+```
+
+```{r}
+captura_puerto_flota_2010_2018 |> 
+  pivot_wider(names_from = especie, values_from = captura, values_fill = 0)
+```
+
+
+```{r}
+tabla_especies <- captura_puerto_flota_2010_2018 |> 
+  pivot_wider(names_from = especie, values_from = captura, values_fill = 0) |> 
+  arrange(fecha)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
