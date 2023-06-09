@@ -89,11 +89,25 @@ read.csv ("datos/captura-puerto-flota-serie-tiempo.csv")
 
 ```{r}
 captura_puerto_flota_2010_2018 |> 
-  filter (fecha %in% c("2010-01", "2010-02", "2010-03", "2010-04", "2010-05","2010-06", "2010-07", "2010-08", "2010-09", "2010-10", "2010-11", "2010-12")) |> 
+  filter ( fecha %in% c("2010-04", "2010-05", "2010-06")) |> 
   group_by(puerto) 
   
 
 ```
+## otra forma de seleccionar un rango sin escribir todo
+
+```{r}
+captura_puerto_flota_2010_2018 |>
+  filter(fecha >= "2010-04") |>
+  filter(fecha <= "2010-06")
+  
+```
+
+
+
+
+
+
 
 
 
@@ -139,6 +153,35 @@ unique(captura_puerto_flota_2010_2018$especie)
 ```{r}
 library(dplyr)
 glimpse(captura_puerto_flota_2010_2018)
+```
+
+suma de la captura filtrando fecha
+
+
+```{r}
+captura_2010_01_todas <- captura_puerto_flota_2010_2018 |> 
+  filter(fecha=="2010-01") |>
+  summarise(captura = sum(captura))
+
+```
+
+
+## ahora sumo la captura de la merluza en ese periodo
+
+
+```{r}
+captura_2010_01_Merluzahubbsi <- captura_puerto_flota_2010_2018 |> 
+  filter(fecha == "2010-01") |> 
+  filter(especie == "Merluza hubbsi") |> 
+  summarise(captura = sum(captura))
+
+```
+
+ahora le asigno una variable a cada cosa y saco la media
+
+```{r}
+captura_2010_01_Merluzahubbsi/captura_2010_01_todas
+
 ```
 
 
