@@ -45,7 +45,7 @@ library(usethis)
 El trabajo se realiza a partir de bases de datos privistas por la Subsecretaría
 de Pesca y Acuicultura de la Repùblica Argentina. Comprenden las capturas 
 realizadas por buques que operan dentro de la ZEE de la Repùblica Argentina en 
-el período de 2010 a 2019
+el período de 2010 a 2018
 
 
 
@@ -207,14 +207,6 @@ especies_repre <-
 
 
 
-```{r}
-
-ggplot(data=especies_repre)
-
-especies_repre |>
-  ggplot (especies_repre, aes (fecha, captura)) +
-  geom_point()
-```
 
 
 ```{r}
@@ -227,26 +219,48 @@ especies_repre |>
 
 
 
-## ensanchar la tabla con las especies
+## ensanchar la tabla con las especies (como tiene problemas de traducccion solo tomo 4 especies)
 Quiero tener la especie en cada columna
 
 ```{r}
-captura_puerto_flota_2010_2018
+especies_repre
 
 
 ```
 
 ```{r}
-captura_puerto_flota_2010_2018 |> 
+especies_repre |> 
   pivot_wider(names_from = especie, values_from = captura, values_fill = 0)
 ```
 
 
 ```{r}
-tabla_especies <- captura_puerto_flota_2010_2018 |> 
+captura_puerto_flota_2010_2018 |>
   pivot_wider(names_from = especie, values_from = captura, values_fill = 0) |> 
   arrange(fecha)
+ 
 
+
+```
+
+**lista de especies**
+
+
+```{r}
+
+lista_de_especies <-
+  unique(captura_puerto_flota_2010_2018$especie)
+```
+
+**Cantidad de Variables que contiene la base** 
+
+```{r}
+colnames(captura_puerto_flota_2010_2018)
+```
+
+```{r}
+captura_puerto_flota_2010_2018 <-
+  captura_puerto_flota_2010_2018[c("fecha", "flota", "puerto", "especie", "captura")]
 
 ```
 
@@ -258,20 +272,10 @@ tabla_especies <- captura_puerto_flota_2010_2018 |>
 
 
 
+```{r}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+  left_join(estaciones, by = "id_estacion") |>
+```
 
 
 
