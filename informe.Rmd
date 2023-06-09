@@ -82,3 +82,25 @@ read.csv ("datos/captura-puerto-flota-serie-tiempo.csv")
 ```
 
 
+
+
+```{r}
+
+captura_puerto_flota_2010_2018 |> 
+  filter(captura_puerto_flota_2010_2018, fecha 
+
+```
+
+
+
+```{r}
+captura_puerto_flota_2010_2018 |> 
+  filter (fecha %in% c("2010-01", "2010-02"))
+```
+
+
+
+
+
+
+
