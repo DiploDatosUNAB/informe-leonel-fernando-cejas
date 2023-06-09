@@ -84,21 +84,46 @@ read.csv ("datos/captura-puerto-flota-serie-tiempo.csv")
 
 
 
-```{r}
-
-captura_puerto_flota_2010_2018 |> 
-  filter(captura_puerto_flota_2010_2018, fecha 
-
-```
-
-
 
 ```{r}
 captura_puerto_flota_2010_2018 |> 
-  filter (fecha %in% c("2010-01", "2010-02"))
+  filter (fecha %in% c("2010-01", "2010-02", "2010-03", "2010-04", "2010-05","2010-06", "2010-07", "2010-08", "2010-09", "2010-10", "2010-11", "2010-12")) |> 
+  group_by(puerto) 
+  
+
 ```
 
+```{r}
+ captura_puerto_flota_2010_2018 |>
+  filter(fecha=="2010-01") |>
+  mutate(proporcion = captura [especie = "Merluza hubbsi"]/captura)
+  
 
+```
+
+##captura media es la suma de la captura por especie dividido el nro de casos, que son 26
+
+
+
+```{r}
+captura_puerto_flota_2010_2018 |> 
+   filter(fecha=="2010-01") |>
+  group_by(especie) |> 
+  summarise(captura_media=mean(captura, na.rm =TRUE))
+```
+
+quiero saber cuantos casos aparece merluza hubbsi en lo anterior
+
+```{r}
+
+library(tidyverse)
+aparece_especie <- captura_puerto_flota_2010_2018 %>%
+  
+  filter(fecha=="2010-01") |>
+  group_by(especie) |>
+  tally()
+  
+```
 
 
 
