@@ -37,6 +37,8 @@ library(usethis)
 
 
 
+
+
 **Introducción**
 
 
@@ -93,6 +95,10 @@ captura_puerto_flota_2010_2018 |>
 
 ```
 
+
+
+
+
 ```{r}
  captura_puerto_flota_2010_2018 |>
   filter(fecha=="2010-01") |>
@@ -125,7 +131,14 @@ aparece_especie <- captura_puerto_flota_2010_2018 %>%
   
 ```
 
+```{r}
+unique(captura_puerto_flota_2010_2018$especie)
+```
+##tiene 13 columnas!
 
-
+```{r}
+library(dplyr)
+glimpse(captura_puerto_flota_2010_2018)
+```
 
 
