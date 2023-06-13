@@ -219,8 +219,7 @@ especies_repre |>
 
 
 
-## ensanchar la tabla con las especies (como tiene problemas de traducccion solo tomo 4 especies)
-Quiero tener la especie en cada columna
+** Ensancho la tabla agregando una columna para cada especie**
 
 ```{r}
 especies_repre
@@ -259,7 +258,7 @@ colnames(captura_puerto_flota_2010_2018)
 ```
 
 ```{r}
-captura_puerto_flota_2010_2018 <-
+captura_por_especie <-
   captura_puerto_flota_2010_2018[c("fecha", "flota", "puerto", "especie", "captura")]
 
 ```
@@ -267,16 +266,11 @@ captura_puerto_flota_2010_2018 <-
 
 
 
-
-
-
-
-
 ```{r}
-
-  left_join(estaciones, by = "id_estacion") |>
+captura_agrupada_especie |> 
+  pivot_wider(names_from = especie, values_from = captura, values_fill = 0) |> 
+  arrange(fecha)
 ```
-
 
 
 
