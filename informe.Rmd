@@ -51,17 +51,110 @@ el período de 2010 a 2018
 
 ## Exploración de los datos
 
-```{r}
-library(readr)
-captura_puerto_flota_2010_2018 <- read_csv("datos/captura-puerto-flota-2010-2018.csv")
-
-```
+** En primer lugar hacemos una exploración de datos y seguidamente asignamos 
+a una variable la bbdd completa con la que elejí trabajar**
 
 
 
 ```{r}
 read.csv("datos/captura-puerto-flota-2010-2018.csv")
 ```
+
+
+
+```{r}
+library(readr)
+captura_puerto_flota_2010_2018 <- read_csv("datos/captura-puerto-flota-2010-2018.csv") 
+  
+
+```
+
+
+
+** Contiene 41341 observaciones y 13 variables que son las que se mencionan a continuación: **
+
+"fecha"            "flota"            "puerto"           "provincia"        "provincia_id"    
+"departamento"     "departamento_id"  "latitud"          "longitud"         "categoria"       
+"especie"          "especie_agrupada" "captura"         
+
+
+
+```{r}
+colnames(captura_puerto_flota_2010_2018)
+```
+
+
+
+**lista de especies**
+
+Se observan 89 especies marítimas
+
+```{r}
+
+lista_de_especies <-
+  unique(captura_puerto_flota_2010_2018$especie) |> view()
+```
+
+
+
+**lista de puertos**
+
+
+
+Se observan 23 puertos
+
+```{r}
+
+lista_de_puertos <-
+  unique(captura_puerto_flota_2010_2018$puerto) |> view()
+
+```
+
+**Exploración de los datos**
+
+Seleccioná algunas variables resulten interesantes y mostrá sus propiedades.
+Algunas cosas para mostrar:
+
+-   ¿Cuál es su valor medio y desvío estándard?
+-   ¿Cuál es su rango (valor máximo y valor mínimo)?
+-   ¿Hay alguna anomalía que sugiera que hay datos incorrectos? Valores imposibles (como valores negativos en una variable que sólo puede ser positiva) o poco creíbles.
+-   ¿Cuántas observaciones hay por cada grupo? ¿Cuántos valores faltantes? ¿Hay diferencias?
+
+
+```{r}
+tabla1<-
+
+captura_puerto_flota_2010_2018 |>
+  group_by(puerto) |>
+  mutate(total_puerto = sum(captura)) |> 
+  select(puerto, captura, especie, total_puerto) |> 
+  filter(puerto == "Caleta Cordova") |>
+  group_by(especie) |>
+  summarise(total_especie = sum(captura))
+  
+```
+
+
+
+```{r}
+tabla1 |> 
+  mutate(captura_total= sum(total_especie)) |> 
+  mutate(especie_sobre_total = total_especie/captura_total) |> 
+  arrange(-especie_sobre_total)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ```{r}
@@ -151,7 +244,7 @@ unique(captura_puerto_flota_2010_2018$especie)
 ##tiene 13 columnas!
 
 ```{r}
-library(dplyr)
+
 glimpse(captura_puerto_flota_2010_2018)
 ```
 
@@ -242,14 +335,7 @@ captura_puerto_flota_2010_2018 |>
 
 ```
 
-**lista de especies**
 
-
-```{r}
-
-lista_de_especies <-
-  unique(captura_puerto_flota_2010_2018$especie)
-```
 
 **Cantidad de Variables que contiene la base** 
 
