@@ -8,32 +8,13 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-```
-
-
-```{r}
 library(dplyr)
-```
-
-
-```{r}
-library(ggplot2)
-```
-
-
-```{r}
-library(gitcreds)
-```
-
-```{r}
 library(readr)
+library(ggplot2)
+library(lubridate)
+
+
 ```
-
-
-```{r}
-library(usethis)
-```
-
 
 
 
@@ -42,9 +23,10 @@ library(usethis)
 **Introducción**
 
 
-El trabajo se realiza a partir de bases de datos privistas por la Subsecretaría
-de Pesca y Acuicultura de la Repùblica Argentina. Comprenden las capturas 
-realizadas por buques que operan dentro de la ZEE de la Repùblica Argentina en 
+El trabajo se realiza a partir de bases de datos de el sitio web 
+https://www.datos.gob.ar/ . Estos datos fueron provistos por la Subsecretaría
+de Pesca y Acuicultura de la República Argentina. Comprenden las capturas 
+realizadas por buques que operan dentro de la ZEE de la República Argentina en 
 el período de 2010 a 2018
 
 
@@ -57,21 +39,25 @@ a una variable la bbdd completa con la que elejí trabajar**
 
 
 ```{r}
-read.csv("datos/captura-puerto-flota-2010-2018.csv")
+captura_puerto_flota_2010_2018 <- read_csv("datos/captura-puerto-flota-2010-2018.csv", 
+                                           locale = locale(encoding = "windows-1252"))
 ```
 
+##Como la columna "fecha" se encuentra en caracteres se procede a convertirla
+## a formato fecha
 
 
 ```{r}
-library(readr)
-captura_puerto_flota_2010_2018 <- read_csv("datos/captura-puerto-flota-2010-2018.csv") 
+captura_puerto_flota_2010_2018 <-
+  captura_puerto_flota_2010_2018 |> 
+  mutate(fecha = ym (fecha))
   
-
 ```
 
 
 
-** Contiene 41341 observaciones y 13 variables que son las que se mencionan a continuación: **
+
+##Contiene 41341 observaciones y 13 variables que son las que se mencionan a continuación: 
 
 "fecha"            "flota"            "puerto"           "provincia"        "provincia_id"    
 "departamento"     "departamento_id"  "latitud"          "longitud"         "categoria"       
@@ -92,7 +78,8 @@ Se observan 89 especies marítimas
 ```{r}
 
 lista_de_especies <-
-  unique(captura_puerto_flota_2010_2018$especie) |> view()
+  unique(captura_puerto_flota_2010_2018$especie)
+
 ```
 
 
@@ -106,8 +93,7 @@ Se observan 23 puertos
 ```{r}
 
 lista_de_puertos <-
-  unique(captura_puerto_flota_2010_2018$puerto) |> view()
-
+  unique(captura_puerto_flota_2010_2018$puerto)
 ```
 
 **Exploración de los datos**
@@ -122,13 +108,13 @@ Algunas cosas para mostrar:
 
 
 ```{r}
-tabla1<-
+todos_esp_tot<-
 
 captura_puerto_flota_2010_2018 |>
   group_by(puerto) |>
-  mutate(total_puerto = sum(captura)) |> 
+  mutate(total_puerto = sum(captura, na.rm = TRUE)) |> 
   select(puerto, captura, especie, total_puerto) |> 
-  filter(puerto == "Caleta Cordova") |>
+  
   group_by(especie) |>
   summarise(total_especie = sum(captura))
   
@@ -137,13 +123,13 @@ captura_puerto_flota_2010_2018 |>
 
 
 ```{r}
-tabla1 |> 
-  mutate(captura_total= sum(total_especie)) |> 
+todos_esp_tot<-
+  todos_esp_tot |> 
+  mutate(captura_total= sum(total_especie, na.rm = TRUE)) |> 
   mutate(especie_sobre_total = total_especie/captura_total) |> 
   arrange(-especie_sobre_total)
 
 ```
-
 
 
 
