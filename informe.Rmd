@@ -12,37 +12,38 @@ library(dplyr)
 library(readr)
 library(ggplot2)
 library(lubridate)
+library(tidyverse)
 
 
 ```
 
-
-
-
-
 **Introducción**
 
 
-El trabajo se realiza a partir de bases de datos de el sitio web 
-https://www.datos.gob.ar/ . Estos datos fueron provistos por la Subsecretaría
-de Pesca y Acuicultura de la República Argentina. Comprenden las capturas 
-realizadas por buques que operan dentro de la ZEE de la República Argentina en 
-el período de 2010 a 2018
-
+El trabajo se realiza a partir de bases de datos brindados por el sitio web 
+https://www.datos.gob.ar/ . Los datos del presente informe fueron provistos por
+la Subsecretaría de Pesca y Acuicultura de la República Argentina.
+Comprenden las capturas pesqueras realizadas por buques que operan dentro de la
+ZEE de la República Argentina en el período de 2010 a 2018.
 
 
 ## Exploración de los datos
 
-** En primer lugar hacemos una exploración de datos y seguidamente asignamos 
-a una variable la bbdd completa con la que elejí trabajar**
-
+** En primer lugar hacemos una exploración de los datos y seguidamente asignamos 
+a una variable la base de datos completa con la que elegí trabajar**
 
 
 ```{r}
 captura_puerto_flota_2010_2018 <- read_csv("datos/captura-puerto-flota-2010-2018.csv", 
                                            locale = locale(encoding = "windows-1252"))
 ```
+##Contiene 41341 observaciones y 13 variables que son las que se mencionan a 
+continuación: 
 
+
+```{r}
+str(captura_puerto_flota_2010_2018)
+```
 ##Como la columna "fecha" se encuentra en caracteres se procede a convertirla
 ## a formato fecha
 
@@ -55,47 +56,59 @@ captura_puerto_flota_2010_2018 <-
 ```
 
 
-
-
-##Contiene 41341 observaciones y 13 variables que son las que se mencionan a continuación: 
-
-"fecha"            "flota"            "puerto"           "provincia"        "provincia_id"    
-"departamento"     "departamento_id"  "latitud"          "longitud"         "categoria"       
-"especie"          "especie_agrupada" "captura"         
-
+##Se realiza una visualizacion de las columnas
 
 
 ```{r}
 colnames(captura_puerto_flota_2010_2018)
 ```
+## Las 13 variables con las que contamos para el análisis son las siguientes:
 
 
+"fecha"            "flota"            "puerto"           "provincia"        "provincia_id"    
+"departamento"     "departamento_id"  "latitud"          "longitud"         "categoria"       
+"especie"          "especie_agrupada" "captura"         
 
-**lista de especies**
-
-Se observan 89 especies marítimas
+**Especies del Mar Argentino**
 
 ```{r}
-
 lista_de_especies <-
-  unique(captura_puerto_flota_2010_2018$especie)
-
+  unique(captura_puerto_flota_2010_2018$especie) |> 
+  print()
 ```
 
+```{r}
+captura_puerto_flota_2010_2018_2<-
+  captura_puerto_flota_2010_2018 |> 
+  mutate(especie = fct_lump(especie, n = 10)) |> 
+  filter(especie != "other") |> 
+  count(especie, sort = TRUE) |> 
+  print()
+```
+#Se observan 89 especies marítimas. Al ser demasiadas, dificulta el análisis y
+la visualización de los datos. Por ende, se opta por un número de especies
+mas reducido y representativo. Tomamos las primeras diez especies y le 
+agregamos la especie "Merluza negra" por ser  de importancia comercial
+y científica, además de estar regulada regulada por la FAO.
 
 
-**lista de puertos**
-
-
-
-Se observan 23 puertos
+```{r}
+especies_repre <-
+  captura_puerto_flota_2010_2018 |> 
+  filter (especie %in% c("Merluza hubbsi", "Rayas nep", "Pez gallo", "Lenguados nep", "Pescadilla", "Langostino", "Gatuzo", "Corvina blanca", "Mero","Merluza negra"))
+  
+```
+  
 
 ```{r}
 
-lista_de_puertos <-
-  unique(captura_puerto_flota_2010_2018$puerto)
+  ggplot(data = especies_repre, mapping = aes(x = fecha, y = captura)) + 
+  geom_line (aes(colour = especie))+
+  labs(title = "Capturas Marítimas de las principales especies argentinas",
+       subtitle = "Desde 2010 hasta 2018",
+       x = "Año",
+       y = "Captura")
 ```
-
 **Exploración de los datos**
 
 Seleccioná algunas variables resulten interesantes y mostrá sus propiedades.
@@ -108,253 +121,93 @@ Algunas cosas para mostrar:
 
 
 ```{r}
-todos_esp_tot<-
-
-captura_puerto_flota_2010_2018 |>
-  group_by(puerto) |>
+esp_repre<-
+  especies_repre |>
   mutate(total_puerto = sum(captura, na.rm = TRUE)) |> 
-  select(puerto, captura, especie, total_puerto) |> 
-  
   group_by(especie) |>
   summarise(total_especie = sum(captura))
-  
 ```
 
 
 
 ```{r}
-todos_esp_tot<-
-  todos_esp_tot |> 
+repre_esp_tot<-
+  esp_repre |> 
   mutate(captura_total= sum(total_especie, na.rm = TRUE)) |> 
   mutate(especie_sobre_total = total_especie/captura_total) |> 
-  arrange(-especie_sobre_total)
+  arrange(-especie_sobre_total) |> 
+  print()
 
 ```
 
 
-
-
-
-
-
-
-
-
-
-
-
 ```{r}
-filter(captura_puerto_flota_2010_2018, provincia_id == "06")
-
-```
-estos datos se pierden
-
-```{r}
-filter(captura_puerto_flota_2010_2018, puerto == "Mar del Plata")
-
-```
-
-```{r}
-captura_puerto_flota_serie_tiempo <- read_csv("datos/captura-puerto-flota-serie-tiempo.csv")
-```
-
-```{r}
-read.csv ("datos/captura-puerto-flota-serie-tiempo.csv")
+p<-
+especies_repre %>% 
+  group_by(puerto) %>% 
+  summarise(cantidad = n())
 ```
 
 
 
-
-
 ```{r}
-captura_puerto_flota_2010_2018 |> 
-  filter ( fecha %in% c("2010-04", "2010-05", "2010-06")) |> 
-  group_by(puerto) 
-  
-
-```
-## otra forma de seleccionar un rango sin escribir todo
-
-```{r}
-captura_puerto_flota_2010_2018 |>
-  filter(fecha >= "2010-04") |>
-  filter(fecha <= "2010-06")
-  
+  p |>
+  ggplot(aes(cantidad, puerto))+ 
+  geom_col() 
 ```
 
+Se observa una preponderancia de los puertos de la provincia de Buenos Aires, 
+destacándose, sobre todo, el Puerto de Mar Del Plata.
+Mar del Plata es el puerto mas grande del país y uno de los mas importantes de 
+Sudamérica.
 
-
-
-
-
-
-
-
-
+##borrador
 
 ```{r}
- captura_puerto_flota_2010_2018 |>
-  filter(fecha=="2010-01") |>
-  mutate(proporcion = captura [especie = "Merluza hubbsi"]/captura)
-  
-
-```
-
-##captura media es la suma de la captura por especie dividido el nro de casos, que son 26
-
-
-
-```{r}
-captura_puerto_flota_2010_2018 |> 
-   filter(fecha=="2010-01") |>
-  group_by(especie) |> 
-  summarise(captura_media=mean(captura, na.rm =TRUE))
-```
-
-quiero saber cuantos casos aparece merluza hubbsi en lo anterior
-
-```{r}
-
-library(tidyverse)
-aparece_especie <- captura_puerto_flota_2010_2018 %>%
-  
-  filter(fecha=="2010-01") |>
-  group_by(especie) |>
-  tally()
-  
-```
-
-```{r}
-unique(captura_puerto_flota_2010_2018$especie)
-```
-##tiene 13 columnas!
-
-```{r}
-
-glimpse(captura_puerto_flota_2010_2018)
-```
-
-suma de la captura filtrando fecha
-
-
-```{r}
-captura_2010_01_todas <- captura_puerto_flota_2010_2018 |> 
-  filter(fecha=="2010-01") |>
+e<-
+especies_repre %>% 
+  group_by(puerto) %>% 
   summarise(captura = sum(captura))
-
 ```
-
-
-## ahora sumo la captura de la merluza en ese periodo
-
-
-```{r}
-captura_2010_01_Merluzahubbsi <- captura_puerto_flota_2010_2018 |> 
-  filter(fecha == "2010-01") |> 
-  filter(especie == "Merluza hubbsi") |> 
-  summarise(captura = sum(captura))
-
-```
-
-ahora le asigno una variable a cada cosa y saco la media
-
-```{r}
-captura_2010_01_Merluzahubbsi/captura_2010_01_todas
-
-```
-## averiguar como fueron las capturas por especies por año y hacer un cuadro a traves del tiempo
-
 
 
 
 ```{r}
-captura_puerto_flota_2010_2018 |> 
-  filter (especie %in% c("Merluza hubbsi", "Rayas nep", "Langostino", "Calamar Illex"))
+  e |>
+  ggplot(aes(captura, puerto))+ 
+  geom_col() 
 ```
 
-
-## hago variable de  especies representativas (especies_repre)
-
-```{r}
-
-especies_repre <-
-  captura_puerto_flota_2010_2018 |> 
-  filter (especie %in% c("Merluza hubbsi", "Rayas nep", "Langostino", "Calamar Illex")) 
-  
-
-```
 
 
 
 
 
 ```{r}
-especies_repre |> 
-  ggplot(data = especies_repre, mapping = aes(x = fecha, y = captura)) + 
-  geom_line (aes(colour = especie))
+experimento_1<-
+  especies_repre %>%
+  group_by(puerto)%>%
+  count(especie)
 ```
 
-
-
-
-
-** Ensancho la tabla agregando una columna para cada especie**
+#cuantas especies aparecen por puerto
 
 ```{r}
-especies_repre
+data_count<-  experimento_1 %>%
 
-
-```
-
-```{r}
-especies_repre |> 
-  pivot_wider(names_from = especie, values_from = captura, values_fill = 0)
+  summarise(count = n_distinct(especie))
 ```
 
 
-```{r}
-captura_puerto_flota_2010_2018 |>
-  pivot_wider(names_from = especie, values_from = captura, values_fill = 0) |> 
-  arrange(fecha)
- 
-
-
-```
-
-
-
-**Cantidad de Variables que contiene la base** 
-
-```{r}
-colnames(captura_puerto_flota_2010_2018)
-```
-
-```{r}
-captura_por_especie <-
-  captura_puerto_flota_2010_2018[c("fecha", "flota", "puerto", "especie", "captura")]
-
-```
 
 
 
 
 ```{r}
-captura_agrupada_especie |> 
-  pivot_wider(names_from = especie, values_from = captura, values_fill = 0) |> 
-  arrange(fecha)
+for (g in unique(experimento_1$puerto)) {
+    miembros <- filter(experimento_1, puerto == g)
+
+
+  print(paste("El puerto de", g, "registra una captura de", nrow(miembros), "especie/s"))}
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
