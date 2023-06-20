@@ -20,11 +20,16 @@ library(tidyverse)
 **Introducción**
 
 
-El trabajo se realiza a partir de bases de datos brindados por el sitio web 
-https://www.datos.gob.ar/ . Los datos del presente informe fueron provistos por
+El trabajo se realiza a partir de bases de datos públicas brindadoas por el
+sitio https://www.datos.gob.ar/ . Los datos del presente informe fueron provistos por
 la Subsecretaría de Pesca y Acuicultura de la República Argentina.
 Comprenden las capturas pesqueras realizadas por buques que operan dentro de la
 ZEE de la República Argentina en el período de 2010 a 2018.
+Intentaremos brindar un panorama completo de la producción pesquera nacional, 
+haciendo hincapié en sus principales características ¿que especies se capturan?,
+¿cuales son los principales puertos según el volumen y la diversificación de las
+capturas? ¿los buques mas grandes poseen un impacto mayor sobre el total de lo
+capturado?
 
 
 
@@ -67,6 +72,12 @@ colnames(captura_puerto_flota_2010_2018)
 
 **Especies del Mar Argentino**
 
+La plataforma continental argentina es una de las mas extensas y mas ricas en 
+biodiversidad del mundo. Nuestro país posee derechos exclusivos de explotar los 
+recursos marítimos hasta la milla 200. Mas allá de este límite comienzan las
+denominadas "aguas internacionales". Las siguientes especies son capturadas por
+buques de bandera argentina y descargan lo capturado en puertos argentinos.
+
 ```{r}
 lista_de_especies <-
   unique(captura_puerto_flota_2010_2018$especie) |> 
@@ -93,12 +104,15 @@ captura_puerto_flota_2010_2018_2<-
 
 ```{r}
 especies_repre <-
-  captura_puerto_flota_2010_2018 |> 
+  captura_puerto_flota_2010_2018 |>
   filter (especie %in% c("Merluza hubbsi", "Rayas nep", "Pez gallo", "Lenguados nep", "Pescadilla", "Langostino", "Gatuzo", "Corvina blanca", "Mero","Merluza negra"))
   
 ```
+  
+  
   El siguiente cuadro nos muestra la variación del la captura de las principales
-  especies durante el período de estudio. 
+  especies durante el período de estudio. La captura está expresada en kilogramos.
+  
 
 ```{r}
 
@@ -109,6 +123,9 @@ especies_repre <-
        x = "Año",
        y = "Captura")
 ```
+
+
+
 
 
 Principales especies con su volumen de captura en kilogramos. Se destaca el
@@ -137,7 +154,7 @@ repre_esp_tot<-
   print()
 
 ```
-
+**Sobre los puertos**
 
 Se observa una preponderancia de los puertos de la provincia de Buenos Aires, 
 destacándose, sobre todo, el Puerto de Mar Del Plata.
@@ -147,10 +164,17 @@ Sudamérica.
 
 ```{r}
 pu<-
-especies_repre %>% 
+  captura_puerto_flota_2010_2018 %>%
+  na.omit() |> 
   group_by(puerto) %>% 
-  summarise(captura = sum(captura))
+  summarise(captura = sum(captura)) |> 
+  arrange(-captura) |> 
+  print()
 ```
+
+
+
+
 
 **El siguiente cuadro nos muestra la captura total en kilogramos según el puerto
 donde se produjo la descarga** 
@@ -168,17 +192,19 @@ es de suma importancia para la economía y la generación de empleo local.
 
 Por último se puede observar una menor variedad en la cantidad especies que 
 descargan en los puertos patagónicos. Los puertos bonaerense presentan la
-mayor diversificación.
+mayor diversificación, sobre todo con respecto a Santa Cruz y Tierra del Fuego
 
 ```{r}
 for_puerto<-
-  especies_repre %>%
+  captura_puerto_flota_2010_2018 %>%
   group_by(puerto)%>%
-  count(especie)
+  count(especie) 
 ```
 
+
 ```{r}
-data_count<-  for_puerto %>%
+data_count<-
+  for_puerto %>%
 
   summarise(count = n_distinct(especie))
 ```
@@ -191,5 +217,55 @@ for (g in unique(for_puerto$puerto)) {
 
 
   print(paste("El puerto de", g, "registra una captura de", nrow(miembros), "especie/s"))}
+```
+
+
+**Capturas por tipo de flota**
+
+Este item nos ayuda a comprender la distribución de la captura de acuerdo a la
+embarcación utilizada para la pesca.
+En primer lugar aparecen los mas numerosos, los buque de rada o ría. Son lo mas 
+pequeños y operan sobre las aguas provinciales,más cercanas a la costa hasta una
+distancia de 12 millas.Conservan el pescado en cajones con hielo y realizan
+viajes cortos que suelen duran uno o pocos días
+En un segundo escalón están buques costeros y fresqueros también conservan lo 
+capturado en cajones con hielo pero poseen un tamaño y operatividad mucho 
+mayor que los buques de rada o ria. Sus viajes de pesca, denominados "mareas" 
+pueden durar varios días o semanas.
+Por último los buques congeladores son los de mayor envergadura. El pescado 
+capturado se procesa y congela a bordo, operando como verdaderas factorías 
+flotantes. Sus mareas pueden durar meses. Las distinciones entre distintos
+congeladores se realiza en base al arte de pesca (redes, anzuelos, trampas)
+utilizados para pescar.
+
+
+```{r}
+captura_puerto_flota_2010_2018 |>
+  na.omit() |> 
+  mutate(total_flota = sum(captura, na.rm = TRUE)) |> 
+  group_by(flota) |>
+  summarise(total_flota = sum(captura)) |> 
+  arrange(-total_flota) |> 
+  print()
+  
+
+```
+
+
+
+
+
+
+```{r}
+
+captura_puerto_flota_2010_2018 |>
+  na.omit() |> 
+  ggplot(aes(flota, captura)) +
+  geom_col (aes(colour = flota))+
+  labs(title = "Capturas Marítimas según tipo de flota",
+       subtitle = "Desde 2010 hasta 2018",
+       x = "Año",
+       y = "Captura") |> 
+  print()
 ```
 
