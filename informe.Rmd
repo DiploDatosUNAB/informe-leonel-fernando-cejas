@@ -27,7 +27,7 @@ Comprenden las capturas pesqueras realizadas por buques que operan dentro de la
 ZEE de la República Argentina en el período de 2010 a 2018.
 
 
-## Exploración de los datos
+
 
 ** En primer lugar hacemos una exploración de los datos y seguidamente asignamos 
 a una variable la base de datos completa con la que elegí trabajar**
@@ -37,15 +37,15 @@ a una variable la base de datos completa con la que elegí trabajar**
 captura_puerto_flota_2010_2018 <- read_csv("datos/captura-puerto-flota-2010-2018.csv", 
                                            locale = locale(encoding = "windows-1252"))
 ```
-##Contiene 41341 observaciones y 13 variables que son las que se mencionan a 
-continuación: 
+
 
 
 ```{r}
 str(captura_puerto_flota_2010_2018)
 ```
-##Como la columna "fecha" se encuentra en caracteres se procede a convertirla
-## a formato fecha
+
+Debido a que la variable "fecha" se encuentra en formato de caracteres se 
+procede a convertirla a formato fecha
 
 
 ```{r}
@@ -56,18 +56,14 @@ captura_puerto_flota_2010_2018 <-
 ```
 
 
-##Se realiza una visualizacion de las columnas
+La base de datos contiene 41341 observaciones y 13 variables.
+Las variables se mencionan a continuación: 
 
 
 ```{r}
 colnames(captura_puerto_flota_2010_2018)
 ```
-## Las 13 variables con las que contamos para el análisis son las siguientes:
-
-
-"fecha"            "flota"            "puerto"           "provincia"        "provincia_id"    
-"departamento"     "departamento_id"  "latitud"          "longitud"         "categoria"       
-"especie"          "especie_agrupada" "captura"         
+         
 
 **Especies del Mar Argentino**
 
@@ -76,6 +72,13 @@ lista_de_especies <-
   unique(captura_puerto_flota_2010_2018$especie) |> 
   print()
 ```
+Se observan un total 89 especies marítimas. Al ser demasiadas,  dificulta el 
+análisis y la visualización de los datos. Por ende, se opta por un número de
+especies mas reducido y representativo. Tomamos las primeras diez especies y le 
+agregamos la especie "Merluza negra" por ser  de suma importancia comercial
+y científica, además de estar regulada regulada por la FAO.
+
+** Principales 10 especies en descargas **
 
 ```{r}
 captura_puerto_flota_2010_2018_2<-
@@ -85,11 +88,7 @@ captura_puerto_flota_2010_2018_2<-
   count(especie, sort = TRUE) |> 
   print()
 ```
-#Se observan 89 especies marítimas. Al ser demasiadas, dificulta el análisis y
-la visualización de los datos. Por ende, se opta por un número de especies
-mas reducido y representativo. Tomamos las primeras diez especies y le 
-agregamos la especie "Merluza negra" por ser  de importancia comercial
-y científica, además de estar regulada regulada por la FAO.
+
 
 
 ```{r}
@@ -98,7 +97,8 @@ especies_repre <-
   filter (especie %in% c("Merluza hubbsi", "Rayas nep", "Pez gallo", "Lenguados nep", "Pescadilla", "Langostino", "Gatuzo", "Corvina blanca", "Mero","Merluza negra"))
   
 ```
-  
+  El siguiente cuadro nos muestra la variación del la captura de las principales
+  especies durante el período de estudio. 
 
 ```{r}
 
@@ -109,30 +109,28 @@ especies_repre <-
        x = "Año",
        y = "Captura")
 ```
-**Exploración de los datos**
 
-Seleccioná algunas variables resulten interesantes y mostrá sus propiedades.
-Algunas cosas para mostrar:
 
--   ¿Cuál es su valor medio y desvío estándard?
--   ¿Cuál es su rango (valor máximo y valor mínimo)?
--   ¿Hay alguna anomalía que sugiera que hay datos incorrectos? Valores imposibles (como valores negativos en una variable que sólo puede ser positiva) o poco creíbles.
--   ¿Cuántas observaciones hay por cada grupo? ¿Cuántos valores faltantes? ¿Hay diferencias?
+Principales especies con su volumen de captura en kilogramos. Se destaca el
+principal recurso marítimo de la plataforma continental argentina, la merluza 
+común o merluza hubbsi.Con picos históricos de captura en 2013 y 2018.
+
 
 
 ```{r}
-esp_repre<-
+esp_repre_kilos<-
   especies_repre |>
   mutate(total_puerto = sum(captura, na.rm = TRUE)) |> 
   group_by(especie) |>
-  summarise(total_especie = sum(captura))
+  summarise(total_especie = sum(captura)) |> 
+  print()
 ```
 
 
 
 ```{r}
 repre_esp_tot<-
-  esp_repre |> 
+  esp_repre_kilos |> 
   mutate(captura_total= sum(total_especie, na.rm = TRUE)) |> 
   mutate(especie_sobre_total = total_especie/captura_total) |> 
   arrange(-especie_sobre_total) |> 
@@ -141,71 +139,55 @@ repre_esp_tot<-
 ```
 
 
-```{r}
-p<-
-especies_repre %>% 
-  group_by(puerto) %>% 
-  summarise(cantidad = n())
-```
-
-
-
-```{r}
-  p |>
-  ggplot(aes(cantidad, puerto))+ 
-  geom_col() 
-```
-
 Se observa una preponderancia de los puertos de la provincia de Buenos Aires, 
 destacándose, sobre todo, el Puerto de Mar Del Plata.
 Mar del Plata es el puerto mas grande del país y uno de los mas importantes de 
 Sudamérica.
 
-##borrador
 
 ```{r}
-e<-
+pu<-
 especies_repre %>% 
   group_by(puerto) %>% 
   summarise(captura = sum(captura))
 ```
 
-
+**El siguiente cuadro nos muestra la captura total en kilogramos según el puerto
+donde se produjo la descarga** 
+Se destaca , por lejos, el puerto de Mar del Plata.
+Esta asimetría en el destino que los buques usan para descargar lo capturado ha 
+provocado el pedido y el reclamo de los puertos patagónicos de una distribución
+mas equitativa, ya que el puerto en el cual se descargan las especies capturadas
+es de suma importancia para la economía y la generación de empleo local.
 
 ```{r}
-  e |>
+  pu |>
   ggplot(aes(captura, puerto))+ 
   geom_col() 
 ```
 
-
-
-
-
+Por último se puede observar una menor variedad en la cantidad especies que 
+descargan en los puertos patagónicos. Los puertos bonaerense presentan la
+mayor diversificación.
 
 ```{r}
-experimento_1<-
+for_puerto<-
   especies_repre %>%
   group_by(puerto)%>%
   count(especie)
 ```
 
-#cuantas especies aparecen por puerto
-
 ```{r}
-data_count<-  experimento_1 %>%
+data_count<-  for_puerto %>%
 
   summarise(count = n_distinct(especie))
 ```
 
 
 
-
-
-
 ```{r}
-for (g in unique(experimento_1$puerto)) {
-    miembros <- filter(experimento_1, puerto == g)
+for (g in unique(for_puerto$puerto)) {
+    miembros <- filter(for_puerto, puerto == g)
 
 
   print(paste("El puerto de", g, "registra una captura de", nrow(miembros), "especie/s"))}
