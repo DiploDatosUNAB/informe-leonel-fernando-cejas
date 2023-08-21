@@ -17,7 +17,7 @@ library(tidyverse)
 
 ```
 
-**Introducción**
+**Introducción** PRUEBA VISUALIZACIÓN 2
 
 
 El trabajo se realiza a partir de bases de datos públicas brindadoas por el
