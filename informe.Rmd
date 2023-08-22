@@ -1,36 +1,271 @@
 ---
-title: "titulo"
-author: "nombres"
+title: "Pesca - Desembarques de capturas marítimas"
+author: "Leonel Fernando Cejas"
 output: html_document
 ---
 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-# Cargar los paquetes necesarios acá
+
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(lubridate)
+library(tidyverse)
+
+
 ```
 
-
-## Introducción
-
+**Introducción** PRUEBA VISUALIZACIÓN
 
 
-## Exploración de los datos
+El trabajo se realiza a partir de bases de datos públicas brindadoas por el
+sitio https://www.datos.gob.ar/ . Los datos del presente informe fueron provistos por
+la Subsecretaría de Pesca y Acuicultura de la República Argentina.
+Comprenden las capturas pesqueras realizadas por buques que operan dentro de la
+ZEE de la República Argentina en el período de 2010 a 2018.
+Intentaremos brindar un panorama completo de la producción pesquera nacional, 
+haciendo hincapié en sus principales características ¿que especies se capturan?,
+¿cuales son los principales puertos según el volumen y la diversificación de las
+capturas? ¿los buques mas grandes poseen un impacto mayor sobre el total de lo
+capturado?
+
+
+
+
+** En primer lugar hacemos una exploración de los datos y seguidamente asignamos 
+a una variable la base de datos completa con la que elegí trabajar**
 
 
 ```{r}
-# Código para cargar o leer los datos
+captura_puerto_flota_2010_2018 <- read_csv("datos/captura-puerto-flota-2010-2018.csv", 
+                                           locale = locale(encoding = "windows-1252"))
 ```
 
 
 
 ```{r}
-# Cödigo de R acá 
-# Agregá más bloques según sea necesario
+str(captura_puerto_flota_2010_2018)
+```
+
+Debido a que la variable "fecha" se encuentra en formato de caracteres se 
+procede a convertirla a formato fecha
+
+
+```{r}
+captura_puerto_flota_2010_2018 <-
+  captura_puerto_flota_2010_2018 |> 
+  mutate(fecha = ym (fecha))
+  
+```
+
+
+La base de datos contiene 41341 observaciones y 13 variables.
+Las variables se mencionan a continuación: 
+
+
+```{r}
+colnames(captura_puerto_flota_2010_2018)
+```
+         
+
+**Especies del Mar Argentino**
+
+La plataforma continental argentina es una de las mas extensas y mas ricas en 
+biodiversidad del mundo. Nuestro país posee derechos exclusivos de explotar los 
+recursos marítimos hasta la milla 200. Mas allá de este límite comienzan las
+denominadas "aguas internacionales". Las siguientes especies son capturadas por
+buques de bandera argentina y descargan lo capturado en puertos argentinos.
+
+```{r}
+lista_de_especies <-
+  unique(captura_puerto_flota_2010_2018$especie) |> 
+  print()
+```
+Se observan un total 89 especies marítimas. Al ser demasiadas,  dificulta el 
+análisis y la visualización de los datos. Por ende, se opta por un número de
+especies mas reducido y representativo. Tomamos las primeras diez especies y le 
+agregamos la especie "Merluza negra" por ser  de suma importancia comercial
+y científica, además de estar regulada regulada por la FAO.
+
+** Principales 10 especies en descargas **
+
+```{r}
+captura_puerto_flota_2010_2018_2<-
+  captura_puerto_flota_2010_2018 |> 
+  mutate(especie = fct_lump(especie, n = 10)) |> 
+  filter(especie != "other") |> 
+  count(especie, sort = TRUE) |> 
+  print()
 ```
 
 
 
-## Hipótesis
+```{r}
+especies_repre <-
+  captura_puerto_flota_2010_2018 |>
+  filter (especie %in% c("Merluza hubbsi", "Rayas nep", "Pez gallo", "Lenguados nep", "Pescadilla", "Langostino", "Gatuzo", "Corvina blanca", "Mero","Merluza negra"))
+  
+```
+  
+  
+  El siguiente cuadro nos muestra la variación del la captura de las principales
+  especies durante el período de estudio. La captura está expresada en kilogramos.
+  
 
+```{r}
+
+  ggplot(data = especies_repre, mapping = aes(x = fecha, y = captura)) + 
+  geom_line (aes(colour = especie))+
+  labs(title = "Capturas Marítimas de las principales especies argentinas",
+       subtitle = "Desde 2010 hasta 2018",
+       x = "Año",
+       y = "Captura")
+```
+
+
+
+
+
+Principales especies con su volumen de captura en kilogramos. Se destaca el
+principal recurso marítimo de la plataforma continental argentina, la merluza 
+común o merluza hubbsi.Con picos históricos de captura en 2013 y 2018.
+
+
+
+```{r}
+esp_repre_kilos<-
+  especies_repre |>
+  mutate(total_puerto = sum(captura, na.rm = TRUE)) |> 
+  group_by(especie) |>
+  summarise(total_especie = sum(captura)) |> 
+  print()
+```
+
+
+
+```{r}
+repre_esp_tot<-
+  esp_repre_kilos |> 
+  mutate(captura_total= sum(total_especie, na.rm = TRUE)) |> 
+  mutate(especie_sobre_total = total_especie/captura_total) |> 
+  arrange(-especie_sobre_total) |> 
+  print()
+
+```
+**Sobre los puertos**
+
+Se observa una preponderancia de los puertos de la provincia de Buenos Aires, 
+destacándose, sobre todo, el Puerto de Mar Del Plata.
+Mar del Plata es el puerto mas grande del país y uno de los mas importantes de 
+Sudamérica.
+
+
+```{r}
+pu<-
+  captura_puerto_flota_2010_2018 %>%
+  na.omit() |> 
+  group_by(puerto) %>% 
+  summarise(captura = sum(captura)) |> 
+  arrange(-captura) |> 
+  print()
+```
+
+
+
+
+
+**El siguiente cuadro nos muestra la captura total en kilogramos según el puerto
+donde se produjo la descarga** 
+Se destaca , por lejos, el puerto de Mar del Plata.
+Esta asimetría en el destino que los buques usan para descargar lo capturado ha 
+provocado el pedido y el reclamo de los puertos patagónicos de una distribución
+mas equitativa, ya que el puerto en el cual se descargan las especies capturadas
+es de suma importancia para la economía y la generación de empleo local.
+
+```{r}
+  pu |>
+  ggplot(aes(captura, puerto))+ 
+  geom_col() 
+```
+
+Por último se puede observar una menor variedad en la cantidad especies que 
+descargan en los puertos patagónicos. Los puertos bonaerense presentan la
+mayor diversificación, sobre todo con respecto a Santa Cruz y Tierra del Fuego
+
+```{r}
+for_puerto<-
+  captura_puerto_flota_2010_2018 %>%
+  group_by(puerto)%>%
+  count(especie) 
+```
+
+
+```{r}
+data_count<-
+  for_puerto %>%
+
+  summarise(count = n_distinct(especie))
+```
+
+
+
+```{r}
+for (g in unique(for_puerto$puerto)) {
+    miembros <- filter(for_puerto, puerto == g)
+
+
+  print(paste("El puerto de", g, "registra una captura de", nrow(miembros), "especie/s"))}
+```
+
+
+**Capturas por tipo de flota**
+
+Este item nos ayuda a comprender la distribución de la captura de acuerdo a la
+embarcación utilizada para la pesca.
+En primer lugar aparecen los mas numerosos, los buque de rada o ría. Son lo mas 
+pequeños y operan sobre las aguas provinciales,más cercanas a la costa hasta una
+distancia de 12 millas.Conservan el pescado en cajones con hielo y realizan
+viajes cortos que suelen duran uno o pocos días
+En un segundo escalón están buques costeros y fresqueros también conservan lo 
+capturado en cajones con hielo pero poseen un tamaño y operatividad mucho 
+mayor que los buques de rada o ria. Sus viajes de pesca, denominados "mareas" 
+pueden durar varios días o semanas.
+Por último los buques congeladores son los de mayor envergadura. El pescado 
+capturado se procesa y congela a bordo, operando como verdaderas factorías 
+flotantes. Sus mareas pueden durar meses. Las distinciones entre distintos
+congeladores se realiza en base al arte de pesca (redes, anzuelos, trampas)
+utilizados para pescar.
+
+
+```{r}
+captura_puerto_flota_2010_2018 |>
+  na.omit() |> 
+  mutate(total_flota = sum(captura, na.rm = TRUE)) |> 
+  group_by(flota) |>
+  summarise(total_flota = sum(captura)) |> 
+  arrange(-total_flota) |> 
+  print()
+  
+
+```
+
+
+
+
+
+
+```{r}
+
+captura_puerto_flota_2010_2018 |>
+  na.omit() |> 
+  ggplot(aes(flota, captura)) +
+  geom_col (aes(colour = flota))+
+  labs(title = "Capturas Marítimas según tipo de flota",
+       subtitle = "Desde 2010 hasta 2018",
+       x = "Año",
+       y = "Captura") |> 
+  print()
+```
 
