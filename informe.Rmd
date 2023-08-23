@@ -1,5 +1,5 @@
 ---
-title: "Pesca - Desembarques de capturas marítimas"
+title: "Capturas pesqueras y visualización de datos"
 author: "Leonel Fernando Cejas"
 output: html_document
 ---
@@ -12,24 +12,23 @@ library(dplyr)
 library(readr)
 library(ggplot2)
 library(lubridate)
-library(tidyverse)
-
-
+library(wesanderson)
 ```
 
-**Introducción** PRUEBA VISUALIZACIÓN
+
+**Introducción** 
 
 
-El trabajo se realiza a partir de bases de datos públicas brindadoas por el
+El trabajo se realiza a partir de bases de datos públicas brindadas por el
 sitio https://www.datos.gob.ar/ . Los datos del presente informe fueron provistos por
 la Subsecretaría de Pesca y Acuicultura de la República Argentina.
 Comprenden las capturas pesqueras realizadas por buques que operan dentro de la
-ZEE de la República Argentina en el período de 2010 a 2018.
-Intentaremos brindar un panorama completo de la producción pesquera nacional, 
-haciendo hincapié en sus principales características ¿que especies se capturan?,
-¿cuales son los principales puertos según el volumen y la diversificación de las
-capturas? ¿los buques mas grandes poseen un impacto mayor sobre el total de lo
-capturado?
+ZEE de la República Argentina en el año 2018.
+Intentaremos brindar un panorama completo sobre el comportamiento e las tres principales 
+especies capturadas, desde esl punto de vista comercial:
+"Langostino", "Merluza hubbsi"y "Calamar Illex"
+Por otro lado, con el fin de facilitar la visualización" se analizaran los principales
+puertos de la patagonia, "Rawson", "Puerto Madryn"y "Puerto Deseado".
 
 
 
@@ -43,7 +42,7 @@ captura_puerto_flota_2010_2018 <- read_csv("datos/captura-puerto-flota-2010-2018
                                            locale = locale(encoding = "windows-1252"))
 ```
 
-
+Conociendo la bases:
 
 ```{r}
 str(captura_puerto_flota_2010_2018)
@@ -83,189 +82,212 @@ lista_de_especies <-
   unique(captura_puerto_flota_2010_2018$especie) |> 
   print()
 ```
+
+
 Se observan un total 89 especies marítimas. Al ser demasiadas,  dificulta el 
 análisis y la visualización de los datos. Por ende, se opta por un número de
-especies mas reducido y representativo. Tomamos las primeras diez especies y le 
-agregamos la especie "Merluza negra" por ser  de suma importancia comercial
-y científica, además de estar regulada regulada por la FAO.
-
-** Principales 10 especies en descargas **
-
-```{r}
-captura_puerto_flota_2010_2018_2<-
-  captura_puerto_flota_2010_2018 |> 
-  mutate(especie = fct_lump(especie, n = 10)) |> 
-  filter(especie != "other") |> 
-  count(especie, sort = TRUE) |> 
-  print()
-```
+especies mas reducido y representativo. 
+Se tomaran las especies "Langostino", "Merluza hubbsi" y "Calamar Illex"
+Asimismo los análisis serán para la zafra 2018, por la misma razón
 
 
 
 ```{r}
-especies_repre <-
-  captura_puerto_flota_2010_2018 |>
-  filter (especie %in% c("Merluza hubbsi", "Rayas nep", "Pez gallo", "Lenguados nep", "Pescadilla", "Langostino", "Gatuzo", "Corvina blanca", "Mero","Merluza negra"))
+mt_especie_2018 <- captura_puerto_flota_2010_2018 %>%
+  select(especie, puerto, fecha, captura)%>%
+  filter(fecha >= as.Date("2018-01-01") & fecha <= as.Date("2018-12-01")) %>%
+ 
+  group_by(especie)%>%
+  summarise(total_mt = sum(captura/1000000))%>%
+
+
+  arrange(-total_mt)
+  
+  print(mt_especie_2018)
   
 ```
+
+
+```{r}
+especie_2018<- mt_especie_2018%>%
+  
+  filter (especie %in% c("Langostino", "Merluza hubbsi", "Calamar Illex"))
   
   
+```
+
+  
+Se observa una preponderancia total del principal recurso marino argentino, 
+la Merluza hubbsi o merluza común
+
+```{r}
+ggplot(especie_2018, aes(x= especie, y = total_mt))+
+  geom_bar(stat = "identity", fill = "skyblue") +
+
+  labs(
+    title = "Captura de especies pesqueras en 2018",
+    subtitle = "Principales especies comerciales",
+    x = "Especie",
+    y = "Miles de toneladas"
+  )
+
+
+```
+
+ 
   El siguiente cuadro nos muestra la variación del la captura de las principales
-  especies durante el período de estudio. La captura está expresada en kilogramos.
+  especies durante el período de estudio. La captura está expresada en miles de toneladas
   
 
 ```{r}
-
-  ggplot(data = especies_repre, mapping = aes(x = fecha, y = captura)) + 
-  geom_line (aes(colour = especie))+
-  labs(title = "Capturas Marítimas de las principales especies argentinas",
-       subtitle = "Desde 2010 hasta 2018",
-       x = "Año",
-       y = "Captura")
-```
-
-
-
-
-
-Principales especies con su volumen de captura en kilogramos. Se destaca el
-principal recurso marítimo de la plataforma continental argentina, la merluza 
-común o merluza hubbsi.Con picos históricos de captura en 2013 y 2018.
-
-
-
-```{r}
-esp_repre_kilos<-
-  especies_repre |>
-  mutate(total_puerto = sum(captura, na.rm = TRUE)) |> 
-  group_by(especie) |>
-  summarise(total_especie = sum(captura)) |> 
+df_2018 <-
+  captura_puerto_flota_2010_2018 %>%
+  select(fecha,puerto,especie,flota,captura)%>%
+  filter (especie %in% c("Langostino", "Merluza hubbsi", "Calamar Illex"))%>%
+  filter(fecha >= as.Date("2018-01-01") & fecha <= as.Date("2018-12-01"))%>%
+  filter(puerto %in% c ("Rawson", "Puerto Madryn", "Puerto Deseado"))%>%
+  mutate(toneladas = captura/ 1000)%>%
   print()
 ```
 
 
 
-```{r}
-repre_esp_tot<-
-  esp_repre_kilos |> 
-  mutate(captura_total= sum(total_especie, na.rm = TRUE)) |> 
-  mutate(especie_sobre_total = total_especie/captura_total) |> 
-  arrange(-especie_sobre_total) |> 
-  print()
 
+```{r}
+df_2018 <- df_2018 %>%
+  mutate(mes = lubridate::month(fecha))
+
+
+df_2018_agrupados <- df_2018 %>%
+  
+  group_by(mes,especie) %>%
+  summarise(suma_de_toneladas = sum(toneladas))%>%
+
+  print()
 ```
+
+El langostino es especie acompañante de la merluza. Es decir se encuentran en la misma zona.
+De acuerdo a parámetros biológicos (migración, tamaño, adultez, etc) se establecen 
+zonas de veda para determinadas especies.
+Nótese en el siguiente cuadro la relación inversa entre la captura de estas dos especies.
+La captura de calamar posee picos en marzo, mayo y octubre
+
+  
+```{r}
+ggplot(df_2018_agrupados, aes(mes, suma_de_toneladas)) +
+  geom_point(aes(color = especie))+
+  geom_line(aes(color = especie))+
+  scale_x_continuous(breaks = 1:12, labels = c("Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Agos", "Sep", "Oct", "Nov", "Dic")) +
+  labs(title = "Variacion mensual de capturas, año 2018",
+       subtitle = "Fuente: datos.gob.ar",
+       x = "mes",
+       y = "Captura en toneladas",
+       fill = "Especie")
+  
+```
+  
+
+
 **Sobre los puertos**
 
-Se observa una preponderancia de los puertos de la provincia de Buenos Aires, 
-destacándose, sobre todo, el Puerto de Mar Del Plata.
-Mar del Plata es el puerto mas grande del país y uno de los mas importantes de 
-Sudamérica.
+Se observa una preponderancia de Puerto Madryn, asimismo las descargas de la
+especie Merluza hubbsi o merluza común se destacan sobre el resto
 
 
 ```{r}
-pu<-
-  captura_puerto_flota_2010_2018 %>%
-  na.omit() |> 
-  group_by(puerto) %>% 
-  summarise(captura = sum(captura)) |> 
-  arrange(-captura) |> 
+df_2018_agrupados_puerto <- df_2018 %>%
+  
+  group_by(puerto ,especie) %>%
+  summarise(suma_toneladas = sum(toneladas))%>%
+
   print()
 ```
 
 
 
+```{r}
+df_2018_agrupados_puerto |>
+  
+  ggplot(data = df_2018_agrupados_puerto, mapping = aes(x = puerto, y = suma_toneladas))+
+    geom_col(aes(fill = especie), position = "dodge")+
+    theme(legend.position = "bottom")
+```
 
 
-**El siguiente cuadro nos muestra la captura total en kilogramos según el puerto
-donde se produjo la descarga** 
-Se destaca , por lejos, el puerto de Mar del Plata.
-Esta asimetría en el destino que los buques usan para descargar lo capturado ha 
-provocado el pedido y el reclamo de los puertos patagónicos de una distribución
-mas equitativa, ya que el puerto en el cual se descargan las especies capturadas
-es de suma importancia para la economía y la generación de empleo local.
+
+
 
 ```{r}
-  pu |>
+  df_2018 |>
   ggplot(aes(captura, puerto))+ 
-  geom_col() 
-```
-
-Por último se puede observar una menor variedad en la cantidad especies que 
-descargan en los puertos patagónicos. Los puertos bonaerense presentan la
-mayor diversificación, sobre todo con respecto a Santa Cruz y Tierra del Fuego
-
-```{r}
-for_puerto<-
-  captura_puerto_flota_2010_2018 %>%
-  group_by(puerto)%>%
-  count(especie) 
+  geom_col()+
+  hrbrthemes::theme_ft_rc() + 
+  ggtitle("Capturas por Puerto") + 
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 15),
+        plot.title = element_text(size = 20)) %>%
+  scale_color_manual(values= wes_palette("GrandBudapest1"))
 ```
 
 
-```{r}
-data_count<-
-  for_puerto %>%
-
-  summarise(count = n_distinct(especie))
-```
-
-
-
-```{r}
-for (g in unique(for_puerto$puerto)) {
-    miembros <- filter(for_puerto, puerto == g)
-
-
-  print(paste("El puerto de", g, "registra una captura de", nrow(miembros), "especie/s"))}
-```
 
 
 **Capturas por tipo de flota**
 
 Este item nos ayuda a comprender la distribución de la captura de acuerdo a la
 embarcación utilizada para la pesca.
-En primer lugar aparecen los mas numerosos, los buque de rada o ría. Son lo mas 
-pequeños y operan sobre las aguas provinciales,más cercanas a la costa hasta una
-distancia de 12 millas.Conservan el pescado en cajones con hielo y realizan
-viajes cortos que suelen duran uno o pocos días
-En un segundo escalón están buques costeros y fresqueros también conservan lo 
-capturado en cajones con hielo pero poseen un tamaño y operatividad mucho 
-mayor que los buques de rada o ria. Sus viajes de pesca, denominados "mareas" 
-pueden durar varios días o semanas.
-Por último los buques congeladores son los de mayor envergadura. El pescado 
-capturado se procesa y congela a bordo, operando como verdaderas factorías 
-flotantes. Sus mareas pueden durar meses. Las distinciones entre distintos
+En primer lugar aparecen los tangoneros. Estos buques capturan como especie objetivo
+al Langostino. Debido a la cercanía de la zona de pesca con los puertos
+patagónicos, suelen descargar su captura en los mismos
+
+En segundo lugar se observan los buques congeladores o factorias.
+Son los de mayor envergadura. El pescado capturado se procesa y congela a bordo.
+Sus mareas pueden durar meses. Las distinciones entre distintos
 congeladores se realiza en base al arte de pesca (redes, anzuelos, trampas)
 utilizados para pescar.
 
+En un tercer escalon se encuentran los buques fresqueros, costeros y de rada o ría.
+Estos buque son medianos o pequeños, se abocan a la captura de merluza y de varido
+costero. Conservan las capturas en cajones con escamas de hielo y sus viajes de
+pesca pueden duran dias o unas pocas semanas.
+
+Por último aparecen los poteros. Los poteros se especializan en la captura de 
+Calamar Illex. Realizan la pesca de noche usando lamparas de gran poder que
+inducen al calamar a ascender y son capturados por unos "anzuelos poteros". 
+
+
+
 
 ```{r}
-captura_puerto_flota_2010_2018 |>
-  na.omit() |> 
-  mutate(total_flota = sum(captura, na.rm = TRUE)) |> 
-  group_by(flota) |>
-  summarise(total_flota = sum(captura)) |> 
-  arrange(-total_flota) |> 
+flota <-
+  unique(captura_puerto_flota_2010_2018$flota) |> 
   print()
+```
+
+
+
+  geom_col(aes(fill = flota))+
+
+```{r}
+
+df_2018 |>
+  na.omit() |> 
+  ggplot(aes(flota, captura/1000))+
+  geom_point(aes(color = flota , size = captura)) +
   
-
-```
-
-
-
-
-
-
-```{r}
-
-captura_puerto_flota_2010_2018 |>
-  na.omit() |> 
-  ggplot(aes(flota, captura)) +
-  geom_col (aes(colour = flota))+
-  labs(title = "Capturas Marítimas según tipo de flota",
-       subtitle = "Desde 2010 hasta 2018",
-       x = "Año",
-       y = "Captura") |> 
+  scale_x_discrete(labels = c("Costeros" = "Costeros",
+                              "Rada o ría" = "Rada",
+                              "Congeladores tangoneros"= "Tangoneros",
+                              "Congeladores arrastreros"= "Factorias",
+                              "Congeladores poteros nacionales" = "Poteros",
+                              Fresqueros="Fresqueros"))+
+                     labs(title = "Capturas Marítimas según tipo de flota 2018",
+       subtitle = "Fuente: datos.gob.ar",
+       x = "Tipo de flota",
+       y = "Captura en toneladas") %>%
   print()
+
 ```
+
+
 
